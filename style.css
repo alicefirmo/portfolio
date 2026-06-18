@@ -192,7 +192,8 @@ body {
   cursor: help;
 }
 
-.text-block:hover p {
+.text-block:hover p,
+.text-block.revealed p {
   --mask-percent: 0%;
 }
 

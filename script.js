@@ -465,4 +465,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  // --- TEXT BLOCK TOUCH REVEAL ---
+  const textBlocks = document.querySelectorAll('.text-block');
+  textBlocks.forEach(block => {
+    block.addEventListener('click', () => {
+      block.classList.toggle('revealed');
+    });
+  });
 });
