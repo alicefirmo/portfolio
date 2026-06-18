@@ -466,11 +466,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- TEXT BLOCK TOUCH REVEAL ---
+  // --- TEXT BLOCK MASK ANIMATION ENGINE (Fully compatible with iOS/Safari) ---
+  const animateMask = (paragraph, targetPercent, duration = 3500) => {
+    const startPercent = parseFloat(paragraph.style.getPropertyValue('--mask-percent') || '75');
+    const startTime = performance.now();
+
+    const update = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // easeOutCubic: f(t) = 1 - (1-t)^3
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = startPercent + (targetPercent - startPercent) * ease;
+      
+      paragraph.style.setProperty('--mask-percent', `${current}%`);
+
+      if (progress < 1) {
+        paragraph.dataset.animId = requestAnimationFrame(update);
+      } else {
+        delete paragraph.dataset.animId;
+      }
+    };
+
+    if (paragraph.dataset.animId) {
+      cancelAnimationFrame(parseInt(paragraph.dataset.animId));
+    }
+    paragraph.dataset.animId = requestAnimationFrame(update);
+  };
+
   const textBlocks = document.querySelectorAll('.text-block');
   textBlocks.forEach(block => {
+    const p = block.querySelector('p');
+    if (!p) return;
+    
+    // Set initial custom property value
+    p.style.setProperty('--mask-percent', '75%');
+
+    const triggerReveal = () => {
+      animateMask(p, 0, 3500); // Reveal over 3.5s
+    };
+
+    const triggerHide = () => {
+      animateMask(p, 75, 2000); // Re-hide over 2s
+    };
+
+    // Desktop hover support
+    block.addEventListener('mouseenter', triggerReveal);
+    block.addEventListener('mouseleave', triggerHide);
+
+    // Mobile tap / toggle support
     block.addEventListener('click', () => {
-      block.classList.toggle('revealed');
+      const isRevealed = block.classList.toggle('revealed');
+      if (isRevealed) {
+        triggerReveal();
+      } else {
+        triggerHide();
+      }
     });
   });
 });

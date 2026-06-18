@@ -188,13 +188,7 @@ body {
   background-repeat: repeat;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  transition: --mask-percent 3.5s cubic-bezier(0.25, 1, 0.5, 1);
   cursor: help;
-}
-
-.text-block:hover p,
-.text-block.revealed p {
-  --mask-percent: 0%;
 }
 
 .text-left {
