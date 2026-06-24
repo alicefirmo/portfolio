@@ -140,7 +140,7 @@ body {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   column-gap: 2rem;
-  row-gap: 6rem;
+  row-gap: 10rem;
   align-items: start;
 }
 
