@@ -180,6 +180,30 @@ body {
   text-align: justify;
 }
 
+/* Video blocks */
+.grid-video-wrapper {
+  overflow: hidden;
+  background-color: #0c0c0c;
+  transition: transform var(--transition-speed) var(--transition-easing);
+}
+
+.grid-video-wrapper video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.video-left {
+  grid-column: 1 / span 4;
+}
+
+.video-link {
+  display: block;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
 .text-block p {
   --mask-percent: 75%;
   line-height: 1.62;
@@ -381,6 +405,9 @@ footer {
   .text-right {
     grid-column: 1 / span 12;
   }
+  .video-left {
+    grid-column: 1 / span 12;
+  }
 }
 
 @media (max-width: 768px) {
@@ -417,7 +444,7 @@ footer {
     grid-column: 1 / -1;
   }
 
-  .text-left, .text-right {
+  .text-left, .text-right, .video-left {
     grid-column: 1 / -1;
     text-align: left;
   }
