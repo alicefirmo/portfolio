@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       
     if (overlap) {
       const now = performance.now();
-      if (!wasOverlapping || (now - lastBloodSpawnTime > 120)) {
+      if (!wasOverlapping || (now - lastBloodSpawnTime > 80)) {
         wasOverlapping = true;
         lastBloodSpawnTime = now;
         
