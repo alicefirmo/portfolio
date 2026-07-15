@@ -609,4 +609,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     wrapper.addEventListener('touchend', onEnd);
   });
+
+  // --- CUSTOM ANIMATED CURSOR FOLLOWER ---
+  const evilCursor = document.createElement('div');
+  evilCursor.id = 'evil-cursor';
+  evilCursor.className = 'evil-cursor';
+  document.body.appendChild(evilCursor);
+
+  const targetMedia = document.querySelectorAll('.home-grid .grid-img-wrapper, .home-grid .grid-video-wrapper, .logo, .home-grid .text-block');
+  targetMedia.forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      if (document.body.classList.contains('works-active')) return;
+      evilCursor.style.display = 'block';
+    });
+    el.addEventListener('mouseleave', () => {
+      evilCursor.style.display = 'none';
+    });
+    el.addEventListener('mousemove', (e) => {
+      if (document.body.classList.contains('works-active')) {
+        evilCursor.style.display = 'none';
+        return;
+      }
+      evilCursor.style.left = `${e.clientX}px`;
+      evilCursor.style.top = `${e.clientY}px`;
+    });
+  });
 });

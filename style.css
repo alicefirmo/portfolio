@@ -162,6 +162,30 @@ a, button, [role="button"], .logo, .work-item, .video-link, .fullscreen-overlay,
   transition: transform var(--transition-speed) var(--transition-easing);
 }
 
+.home-grid .grid-img-wrapper,
+.home-grid .grid-video-wrapper,
+.home-grid .grid-video-wrapper video,
+.home-grid .grid-video-wrapper .video-link,
+body:not(.works-active) .logo,
+.home-grid .text-block,
+.home-grid .text-block p {
+  cursor: none !important;
+}
+
+/* Custom animated cursor follower */
+.evil-cursor {
+  position: fixed;
+  width: 64px;
+  height: 64px;
+  background-image: url('assets/cursor_Hand_of_evil_4x.webp');
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 99999;
+  display: none;
+  transform: translate(-50%, -50%);
+}
+
 .grid-img-wrapper img {
   width: 100%;
   height: auto;
