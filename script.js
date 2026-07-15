@@ -494,6 +494,14 @@ document.addEventListener('DOMContentLoaded', () => {
     paragraph.dataset.animId = requestAnimationFrame(update);
   };
 
+  // --- LOGO MASK ANIMATION ---
+  const logoEl = document.querySelector('.logo');
+  if (logoEl) {
+    logoEl.style.setProperty('--mask-percent', '75%');
+    logoEl.addEventListener('mouseenter', () => animateMask(logoEl, 0, 3500));
+    logoEl.addEventListener('mouseleave', () => animateMask(logoEl, 75, 2000));
+  }
+
   const textBlocks = document.querySelectorAll('.text-block');
   textBlocks.forEach(block => {
     const p = block.querySelector('p');

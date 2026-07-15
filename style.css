@@ -109,6 +109,12 @@ body {
   display: inline-block;
   cursor: pointer;
   transition: opacity 0.3s ease, color var(--transition-speed) var(--transition-easing);
+  
+  /* Text mask reveal effect */
+  --mask-percent: 75%;
+  background: linear-gradient(to bottom, transparent var(--mask-percent), currentColor var(--mask-percent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .logo:hover {
