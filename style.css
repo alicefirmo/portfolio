@@ -50,7 +50,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-speed) var(--transition-easing),
               color var(--transition-speed) var(--transition-easing);
-  cursor: url('assets/cursor%20white.png'), auto;
+  cursor: url('assets/cursor%20white.png') 12 12, auto;
+}
+
+a, button, [role="button"], .logo, .work-item, .video-link, .fullscreen-overlay, .fullscreen-overlay.has-slides .overlay-content img {
+  cursor: url('assets/cursor%20white_hover.png') 12 12, pointer;
 }
 
 /* Base Layout Container */
@@ -472,7 +476,18 @@ footer {
 body.works-active {
   background-color: #ffffff;
   color: #000000;
-  cursor: url('assets/cursor.png'), auto;
+  cursor: url('assets/cursor.png') 12 12, auto;
+}
+
+body.works-active a,
+body.works-active button,
+body.works-active [role="button"],
+body.works-active .logo,
+body.works-active .work-item,
+body.works-active .video-link,
+body.works-active .fullscreen-overlay,
+body.works-active .fullscreen-overlay.has-slides .overlay-content img {
+  cursor: url('assets/cursor_hover.png') 12 12, pointer;
 }
 
 body.works-active .logo {
