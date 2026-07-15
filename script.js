@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       
     if (overlap) {
       const now = performance.now();
-      if (!wasOverlapping || (now - lastBloodSpawnTime > 20)) {
+      if (!wasOverlapping || (now - lastBloodSpawnTime > 120)) {
         wasOverlapping = true;
         lastBloodSpawnTime = now;
         
@@ -584,33 +584,39 @@ document.addEventListener('DOMContentLoaded', () => {
     blood.style.opacity = '1';
     document.body.appendChild(blood);
 
-    let frame = 1;
-    const maxFrames = 9;
     blood.style.backgroundImage = `url('assets/blood%20assets1.png')`;
 
+    const spawnTime = performance.now();
+    const totalLifespan = 6000; // Droplets last 6 seconds
+    const frameDuration = 75;   // Fast fluid animation (75ms per frame)
+
     let currentY = y;
-    let velocityY = 4; // Initial fall speed
-    const gravity = 3.5; // Gravity acceleration
+    let velocityY = 0.8;
+    const gravity = 0.03;       // Natural gravity fall curve
 
     const interval = setInterval(() => {
-      frame++;
-      
-      // Apply gravity physics
+      const now = performance.now();
+      const elapsed = now - spawnTime;
+
+      if (elapsed >= totalLifespan) {
+        clearInterval(interval);
+        blood.remove();
+        return;
+      }
+
+      // 1. Apply smooth gravity physics (every 30ms)
       currentY += velocityY;
       velocityY += gravity;
       blood.style.top = `${currentY}px`;
-      
-      // Fade out dynamically
-      const progress = frame / maxFrames;
-      blood.style.opacity = `${1 - progress}`;
 
-      if (frame > maxFrames) {
-        clearInterval(interval);
-        blood.remove();
-      } else {
-        blood.style.backgroundImage = `url('assets/blood%20assets${frame}.png')`;
-      }
-    }, 300); // 300ms per frame for much longer duration
+      // 2. Play frame animation at natural speed and loop it
+      const frame = (Math.floor(elapsed / frameDuration) % 9) + 1;
+      blood.style.backgroundImage = `url('assets/blood%20assets${frame}.png')`;
+
+      // 3. Smoothly fade out
+      const progress = elapsed / totalLifespan;
+      blood.style.opacity = `${1 - progress}`;
+    }, 30); // Update at ~33fps for smooth motion
   }
 
   draggableImages.forEach(wrapper => {
