@@ -50,6 +50,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-speed) var(--transition-easing),
               color var(--transition-speed) var(--transition-easing);
+  cursor: url('assets/cursor%20white.png'), auto;
 }
 
 /* Base Layout Container */
@@ -465,6 +466,7 @@ footer {
 body.works-active {
   background-color: #ffffff;
   color: #000000;
+  cursor: url('assets/cursor.png'), auto;
 }
 
 body.works-active .logo {

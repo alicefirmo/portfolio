@@ -524,4 +524,81 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // --- DRAGGABLE HOME IMAGES ENGINE ---
+  const draggableImages = document.querySelectorAll('.grid-img-wrapper');
+  draggableImages.forEach(wrapper => {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    wrapper.style.cursor = 'grab';
+
+    const onStart = (clientX, clientY) => {
+      isDragging = true;
+      startX = clientX;
+      startY = clientY;
+      wrapper.style.cursor = 'grabbing';
+      wrapper.dataset.origTransition = wrapper.style.transition;
+      wrapper.style.transition = 'none';
+      wrapper.style.zIndex = '1000';
+    };
+
+    const onMove = (clientX, clientY) => {
+      if (!isDragging) return;
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+      const newX = currentX + dx;
+      const newY = currentY + dy;
+      wrapper.style.transform = `translate(${newX}px, ${newY}px)`;
+    };
+
+    const onEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      wrapper.style.cursor = 'grab';
+      wrapper.style.zIndex = '';
+      wrapper.style.transition = wrapper.dataset.origTransition || '';
+      
+      const transform = wrapper.style.transform;
+      const match = transform.match(/translate\(([^px]+)px,\s*([^px]+)px\)/);
+      if (match) {
+        currentX = parseFloat(match[1]);
+        currentY = parseFloat(match[2]);
+      }
+    };
+
+    wrapper.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      onStart(e.clientX, e.clientY);
+      
+      const mouseMoveHandler = (moveEvt) => {
+        onMove(moveEvt.clientX, moveEvt.clientY);
+      };
+      
+      const mouseUpHandler = () => {
+        onEnd();
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+      };
+      
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
+    });
+
+    wrapper.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      onStart(e.touches[0].clientX, e.touches[0].clientY);
+    });
+
+    wrapper.addEventListener('touchmove', (e) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      e.preventDefault();
+      onMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+
+    wrapper.addEventListener('touchend', onEnd);
+  });
 });
