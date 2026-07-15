@@ -535,6 +535,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- DRAGGABLE HOME IMAGES ENGINE ---
   const draggableImages = document.querySelectorAll('.grid-img-wrapper');
+  
+  let wasOverlapping = false;
+  let lastBloodSpawnTime = 0;
+  const checkCollision = () => {
+    if (draggableImages.length < 2) return;
+    const el1 = draggableImages[0];
+    const el2 = draggableImages[1];
+    
+    const rect1 = el1.getBoundingClientRect();
+    const rect2 = el2.getBoundingClientRect();
+    
+    const overlap = !(rect1.right < rect2.left || 
+                      rect1.left > rect2.right || 
+                      rect1.bottom < rect2.top || 
+                      rect1.top > rect2.bottom);
+                      
+    if (overlap) {
+      const now = performance.now();
+      if (!wasOverlapping || (now - lastBloodSpawnTime > 20)) {
+        wasOverlapping = true;
+        lastBloodSpawnTime = now;
+        
+        const x = Math.max(rect1.left, rect2.left);
+        const y = Math.max(rect1.top, rect2.top);
+        const w = Math.min(rect1.right, rect2.right) - x;
+        const h = Math.min(rect1.bottom, rect2.bottom) - y;
+        
+        const centerX = x + w / 2;
+        const centerY = y + h / 2;
+        
+        // Add random scatter offsets for messier bleeding
+        const offsetX = (Math.random() - 0.5) * 40;
+        const offsetY = (Math.random() - 0.5) * 40;
+        
+        spawnBlood(centerX + offsetX, centerY + offsetY);
+      }
+    } else {
+      wasOverlapping = false;
+    }
+  };
+
+  function spawnBlood(x, y) {
+    const blood = document.createElement('div');
+    blood.className = 'blood-effect';
+    blood.style.left = `${x}px`;
+    blood.style.top = `${y}px`;
+    blood.style.opacity = '1';
+    document.body.appendChild(blood);
+
+    let frame = 1;
+    const maxFrames = 9;
+    blood.style.backgroundImage = `url('assets/blood%20assets1.png')`;
+
+    let currentY = y;
+    let velocityY = 4; // Initial fall speed
+    const gravity = 3.5; // Gravity acceleration
+
+    const interval = setInterval(() => {
+      frame++;
+      
+      // Apply gravity physics
+      currentY += velocityY;
+      velocityY += gravity;
+      blood.style.top = `${currentY}px`;
+      
+      // Fade out dynamically
+      const progress = frame / maxFrames;
+      blood.style.opacity = `${1 - progress}`;
+
+      if (frame > maxFrames) {
+        clearInterval(interval);
+        blood.remove();
+      } else {
+        blood.style.backgroundImage = `url('assets/blood%20assets${frame}.png')`;
+      }
+    }, 300); // 300ms per frame for much longer duration
+  }
+
   draggableImages.forEach(wrapper => {
     let isDragging = false;
     let startX = 0;
@@ -561,6 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const newX = currentX + dx;
       const newY = currentY + dy;
       wrapper.style.transform = `translate(${newX}px, ${newY}px)`;
+      checkCollision();
     };
 
     const onEnd = () => {

@@ -186,6 +186,18 @@ body:not(.works-active) .logo,
   transform: translate(-50%, -50%);
 }
 
+.blood-effect {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+  z-index: 10000;
+  transform: translate(-50%, -50%);
+}
+
 .grid-img-wrapper img {
   width: 100%;
   height: auto;
