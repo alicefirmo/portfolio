@@ -11,17 +11,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const feedImgElement = document.getElementById('feed-slideshow-img');
   let feedIntervalId = null;
   let lastFeedImage = '';
+  let feedImagePool = [];
 
   const changeFeedImage = () => {
     if (!window.FEED_IMAGES || window.FEED_IMAGES.length === 0) return;
     
-    let availableImages = window.FEED_IMAGES;
-    if (availableImages.length > 1) {
+    // If the pool is empty, refill it with all images
+    if (feedImagePool.length === 0) {
+      feedImagePool = [...window.FEED_IMAGES];
+    }
+    
+    let availableImages = feedImagePool;
+    // To prevent showing the same image twice in a row during refilling
+    if (availableImages.length > 1 && lastFeedImage) {
       availableImages = availableImages.filter(img => img !== lastFeedImage);
     }
     
     const randomIndex = Math.floor(Math.random() * availableImages.length);
     const selectedImage = availableImages[randomIndex];
+    
+    // Remove the selected image from the active pool
+    feedImagePool = feedImagePool.filter(img => img !== selectedImage);
     lastFeedImage = selectedImage;
     
     if (feedImgElement) {
@@ -31,6 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const startFeedSlideshow = () => {
     stopFeedSlideshow();
+    // Initialize pool if empty
+    if (feedImagePool.length === 0) {
+      feedImagePool = [...window.FEED_IMAGES];
+    }
     changeFeedImage(); // Instant initial change
     feedIntervalId = setInterval(changeFeedImage, 30000);
   };
@@ -41,6 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
       feedIntervalId = null;
     }
   };
+
+  if (feedImgElement) {
+    feedImgElement.addEventListener('dblclick', () => {
+      startFeedSlideshow(); // Change image immediately and reset 30s interval
+    });
+  }
 
   const onSectionChanged = (newSection) => {
     if (newSection === 'feed') {
