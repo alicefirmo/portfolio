@@ -639,3 +639,82 @@ body.works-active .fullscreen-overlay {
 .overlay-content img.zoomed {
   cursor: crosshair;
 }
+
+/* --- FEED TRIGGER & SECTION STYLE (Oldschool Blogspot) --- */
+
+.feed-trigger-wrapper {
+  grid-column: 10 / span 3; /* Smaller width, shifted to the far right */
+  margin-top: 15rem; /* Pushes it lower down in the layout */
+}
+
+.feed-trigger-link {
+  display: block;
+}
+
+.feed-trigger-link img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: none;
+}
+
+.feed-trigger-link:hover img {
+  border: none;
+}
+
+/* Feed Section Container override to disable animation */
+#sec-feed {
+  display: none;
+  opacity: 0;
+  transform: none !important;
+  transition: none !important;
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+#sec-feed.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Oldschool Blogspot Layout */
+.feed-layout {
+  border: none;
+  background-color: transparent;
+  padding: 0;
+  font-family: 'Courier New', Courier, monospace;
+  color: #c0c0c0;
+  text-align: center; /* Center the caption and image */
+}
+
+.feed-image-container {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.feed-image-container img {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+  border: none;
+}
+
+.feed-footer {
+  font-size: 0.8rem;
+  color: #666;
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+.feed-caption {
+  font-style: italic;
+}
+
+/* Hide header links when viewing the feed slideshow */
+body.feed-active .header-links {
+  display: none;
+}
+

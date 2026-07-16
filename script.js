@@ -2,16 +2,68 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoToggle = document.getElementById('logo-toggle');
   const secHome = document.getElementById('sec-home');
   const secWorks = document.getElementById('sec-works');
+  const secFeed = document.getElementById('sec-feed');
 
-  // Track active section state ('home' or 'works')
+  // Track active section state ('home', 'works', or 'feed')
   let currentSection = 'home';
+
+  // --- FEED SLIDESHOW ENGINE ---
+  const feedImgElement = document.getElementById('feed-slideshow-img');
+  let feedIntervalId = null;
+  let lastFeedImage = '';
+
+  const changeFeedImage = () => {
+    if (!window.FEED_IMAGES || window.FEED_IMAGES.length === 0) return;
+    
+    let availableImages = window.FEED_IMAGES;
+    if (availableImages.length > 1) {
+      availableImages = availableImages.filter(img => img !== lastFeedImage);
+    }
+    
+    const randomIndex = Math.floor(Math.random() * availableImages.length);
+    const selectedImage = availableImages[randomIndex];
+    lastFeedImage = selectedImage;
+    
+    if (feedImgElement) {
+      feedImgElement.src = selectedImage;
+    }
+  };
+
+  const startFeedSlideshow = () => {
+    stopFeedSlideshow();
+    changeFeedImage(); // Instant initial change
+    feedIntervalId = setInterval(changeFeedImage, 30000);
+  };
+
+  const stopFeedSlideshow = () => {
+    if (feedIntervalId) {
+      clearInterval(feedIntervalId);
+      feedIntervalId = null;
+    }
+  };
+
+  const onSectionChanged = (newSection) => {
+    if (newSection === 'feed') {
+      startFeedSlideshow();
+    } else {
+      stopFeedSlideshow();
+    }
+  };
 
   const switchSection = (target) => {
     if (target === currentSection) return;
 
-    const activeSec = currentSection === 'home' ? secHome : secWorks;
-    const targetSec = target === 'home' ? secHome : secWorks;
+    let activeSec;
+    if (currentSection === 'home') activeSec = secHome;
+    else if (currentSection === 'works') activeSec = secWorks;
+    else if (currentSection === 'feed') activeSec = secFeed;
 
+    let targetSec;
+    if (target === 'home') targetSec = secHome;
+    else if (target === 'works') targetSec = secWorks;
+    else if (target === 'feed') targetSec = secFeed;
+
+    const oldSection = currentSection;
     currentSection = target;
 
     // Toggle body class for inverted colors
@@ -21,28 +73,54 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('works-active');
     }
 
-    // Smooth transition
-    activeSec.style.opacity = '0';
-    activeSec.style.transform = 'translateY(15px)';
+    if (target === 'feed') {
+      document.body.classList.add('feed-active');
+    } else {
+      document.body.classList.remove('feed-active');
+    }
 
-    setTimeout(() => {
+    onSectionChanged(target);
+
+    // Oldschool instant switch for feed, smooth transition for others
+    const isInstant = (target === 'feed' || oldSection === 'feed');
+
+    if (isInstant) {
+      activeSec.style.opacity = '0';
       activeSec.classList.remove('active');
       activeSec.style.display = 'none';
 
       targetSec.style.display = 'block';
-      // Force reflow
-      targetSec.offsetHeight;
-
       targetSec.classList.add('active');
-      
+      targetSec.style.opacity = '1';
+    } else {
+      // Smooth transition
+      activeSec.style.opacity = '0';
+      activeSec.style.transform = 'translateY(15px)';
+
       setTimeout(() => {
-        targetSec.style.opacity = '1';
-        targetSec.style.transform = 'translateY(0)';
-      }, 50);
-    }, 400); // Wait for fade-out
+        activeSec.classList.remove('active');
+        activeSec.style.display = 'none';
+
+        targetSec.style.display = 'block';
+        targetSec.offsetHeight; // Force reflow
+
+        targetSec.classList.add('active');
+        
+        setTimeout(() => {
+          targetSec.style.opacity = '1';
+          targetSec.style.transform = 'translateY(0)';
+        }, 50);
+      }, 400); // Wait for fade-out
+    }
 
     // Update URL hash
-    window.location.hash = target === 'home' ? '' : 'works';
+    if (target === 'home') {
+      window.location.hash = '';
+    } else if (target === 'works') {
+      window.location.hash = 'works';
+    } else if (target === 'feed') {
+      window.location.hash = 'feed';
+    }
   };
 
   // Logo toggle click event
@@ -64,6 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
       secHome.classList.remove('active');
       secHome.style.display = 'none';
       secHome.style.opacity = '0';
+      secFeed.classList.remove('active');
+      secFeed.style.display = 'none';
+      secFeed.style.opacity = '0';
 
       secWorks.style.display = 'block';
       secWorks.classList.add('active');
@@ -71,10 +152,30 @@ document.addEventListener('DOMContentLoaded', () => {
       secWorks.style.transform = 'translateY(0)';
       currentSection = 'works';
       document.body.classList.add('works-active');
+      document.body.classList.remove('feed-active');
+      onSectionChanged('works');
+    } else if (hash === 'feed') {
+      secHome.classList.remove('active');
+      secHome.style.display = 'none';
+      secHome.style.opacity = '0';
+      secWorks.classList.remove('active');
+      secWorks.style.display = 'none';
+      secWorks.style.opacity = '0';
+
+      secFeed.style.display = 'block';
+      secFeed.classList.add('active');
+      secFeed.style.opacity = '1';
+      currentSection = 'feed';
+      document.body.classList.remove('works-active');
+      document.body.classList.add('feed-active');
+      onSectionChanged('feed');
     } else {
       secWorks.classList.remove('active');
       secWorks.style.display = 'none';
       secWorks.style.opacity = '0';
+      secFeed.classList.remove('active');
+      secFeed.style.display = 'none';
+      secFeed.style.opacity = '0';
 
       secHome.style.display = 'block';
       secHome.classList.add('active');
@@ -82,6 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
       secHome.style.transform = 'translateY(0)';
       currentSection = 'home';
       document.body.classList.remove('works-active');
+      document.body.classList.remove('feed-active');
+      onSectionChanged('home');
     }
   };
 
@@ -92,10 +195,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const hash = window.location.hash.substring(1);
     if (hash === 'works' && currentSection !== 'works') {
       switchSection('works');
-    } else if (hash !== 'works' && currentSection !== 'home') {
+    } else if (hash === 'feed' && currentSection !== 'feed') {
+      switchSection('feed');
+    } else if (hash !== 'works' && hash !== 'feed' && currentSection !== 'home') {
       switchSection('home');
     }
   });
+
 
   // --- AUDIO CONTROLLER (Autoplay with gesture fallback) ---
   let audioTracks = [];

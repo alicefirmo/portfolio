@@ -52,6 +52,13 @@
               <video src="assets/datamosh-2026-06-09T15-10-27.mp4" autoplay loop muted playsinline></video>
             </a>
           </div>
+
+          <!-- Trigger Image to access Feed Section (Under video, right side) -->
+          <div class="grid-img-wrapper feed-trigger-wrapper">
+            <a href="#feed" id="feed-trigger" class="feed-trigger-link">
+              <img src="assets/lady 2.png" alt="Acessar feed" loading="lazy">
+            </a>
+          </div>
         </div>
       </section>
 
@@ -141,6 +148,18 @@
 
         </div>
       </section>
+
+      <!-- --- SECTION: FEED (Hidden by default, Oldschool Blogspot Style) --- -->
+      <section id="sec-feed" class="section" style="display: none; opacity: 0;">
+        <div class="feed-layout">
+          <div class="feed-image-container">
+            <img id="feed-slideshow-img" src="assets/lady 2.png" alt="Feed Image">
+          </div>
+          <div class="feed-footer">
+            <span class="feed-caption">running... (images change randomly every 30s)</span>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer>
@@ -158,6 +177,7 @@
   </div>
 
   <script src="audio/audio_list.js"></script>
+  <script src="feed_images/image_list.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
