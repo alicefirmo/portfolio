@@ -516,7 +516,7 @@ footer {
 /* --- INVERTED THEME (WORKS ACTIVE) --- */
 body.works-active {
   background-color: #ffffff;
-  background-image: url('assets/background 2.webp');
+  background-image: url('assets/background2.webp');
   color: #000000;
   cursor: url('assets/cursor.png') 12 12, auto;
 }
