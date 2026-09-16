@@ -845,4 +845,126 @@ document.addEventListener('DOMContentLoaded', () => {
       evilCursor.style.top = `${e.clientY}px`;
     });
   });
+
+  // --- MULTIPLYING LOADING SCREEN ENGINE ---
+  (function initLoadingScreen() {
+    const loadingScreen = document.getElementById('loading-screen');
+    const loadingContainer = document.getElementById('loading-container');
+    if (!loadingScreen || !loadingContainer) return;
+
+    // 1. Preload 24 animation frames
+    const totalFrames = 24;
+    const framePaths = [];
+    for (let i = 1; i <= totalFrames; i++) {
+      framePaths.push(`assets/loading/image.psd-${i}.webp`);
+      const img = new Image();
+      img.src = framePaths[i - 1];
+    }
+
+    // 2. Play 24-frame animation loop (70ms per frame)
+    let currentFrameIdx = 0;
+    const frameInterval = setInterval(() => {
+      currentFrameIdx = (currentFrameIdx + 1) % totalFrames;
+      const activeImgs = loadingContainer.querySelectorAll('.loading-frame-img');
+      activeImgs.forEach(img => {
+        img.src = framePaths[currentFrameIdx];
+      });
+    }, 70);
+
+    // 3. Grid Setup & Distance Ring Grouping
+    const itemSize = 65; // Smaller size
+    const cols = Math.ceil(window.innerWidth / itemSize);
+    const rows = Math.ceil(window.innerHeight / itemSize);
+
+    loadingContainer.style.gridTemplateColumns = `repeat(${cols}, ${itemSize}px)`;
+    loadingContainer.style.gridTemplateRows = `repeat(${rows}, ${itemSize}px)`;
+
+    const centerR = Math.floor(rows / 2);
+    const centerC = Math.floor(cols / 2);
+
+    // Group grid cells by diagonal distance ring level from center
+    const distMap = new Map();
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const dist = Math.abs(r - centerR) + Math.abs(c - centerC);
+        if (!distMap.has(dist)) distMap.set(dist, []);
+        distMap.get(dist).push({ r, c });
+      }
+    }
+
+    const maxDist = Math.max(...distMap.keys());
+    let currentDistLevel = 0;
+
+    function renderDistanceLevel(level) {
+      if (!distMap.has(level)) return;
+      const cells = distMap.get(level);
+      cells.forEach(cell => {
+        const img = document.createElement('img');
+        img.className = 'loading-frame-img';
+        img.style.gridRow = cell.r + 1;
+        img.style.gridColumn = cell.c + 1;
+        img.src = framePaths[currentFrameIdx];
+        loadingContainer.appendChild(img);
+      });
+    }
+
+    // STRICTLY START WITH ONLY 1 CENTERED INSTANCE (Level 0)
+    renderDistanceLevel(0);
+
+    // 4. Progressive Step-by-Step Multiplication Logic
+    let pageReady = false;
+    let multiplicationComplete = false;
+
+    const pageImages = Array.from(document.querySelectorAll('img:not(.loading-frame-img)'));
+    let loadedCount = 0;
+    const totalPageImages = Math.max(1, pageImages.length);
+
+    function checkPageReady() {
+      if (loadedCount >= totalPageImages) {
+        pageReady = true;
+        tryFinish();
+      }
+    }
+
+    pageImages.forEach(img => {
+      if (img.complete && img.naturalWidth > 0) {
+        loadedCount++;
+      } else {
+        img.addEventListener('load', () => { loadedCount++; checkPageReady(); });
+        img.addEventListener('error', () => { loadedCount++; checkPageReady(); });
+      }
+    });
+    checkPageReady();
+
+    // Gradually multiply 1 diagonal ring every 75ms
+    const growthInterval = setInterval(() => {
+      currentDistLevel++;
+      if (currentDistLevel <= maxDist) {
+        renderDistanceLevel(currentDistLevel);
+      } else {
+        clearInterval(growthInterval);
+        multiplicationComplete = true;
+        tryFinish();
+      }
+    }, 75);
+
+    function tryFinish() {
+      if (multiplicationComplete && pageReady) {
+        setTimeout(() => {
+          loadingScreen.style.opacity = '0';
+          setTimeout(() => {
+            clearInterval(frameInterval);
+            loadingScreen.style.display = 'none';
+          }, 800);
+        }, 300);
+      }
+    }
+
+    // Safety fallback: reveal after max 4.5s
+    setTimeout(() => {
+      pageReady = true;
+      multiplicationComplete = true;
+      tryFinish();
+    }, 4500);
+  })();
 });

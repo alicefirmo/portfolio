@@ -724,3 +724,40 @@ body.feed-active .header-links {
   display: none;
 }
 
+/* --- FULLSCREEN MULTIPLYING LOADING SCREEN --- */
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000000;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: all;
+}
+
+.loading-container {
+  display: grid;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  align-content: center;
+  justify-content: center;
+}
+
+.loading-frame-img {
+  display: block;
+  width: 65px;
+  height: 65px;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+
