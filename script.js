@@ -872,7 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 70);
 
     // 3. Grid Setup & Distance Ring Grouping
-    const itemSize = 65; // Smaller size
+    const itemSize = 65; // Smaller size for dense grid
     const cols = Math.ceil(window.innerWidth / itemSize);
     const rows = Math.ceil(window.innerHeight / itemSize);
 
@@ -893,78 +893,103 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const maxDist = Math.max(...distMap.keys());
-    let currentDistLevel = 0;
+    let renderedLevel = 0;
 
-    function renderDistanceLevel(level) {
-      if (!distMap.has(level)) return;
-      const cells = distMap.get(level);
-      cells.forEach(cell => {
-        const img = document.createElement('img');
-        img.className = 'loading-frame-img';
-        img.style.gridRow = cell.r + 1;
-        img.style.gridColumn = cell.c + 1;
-        img.src = framePaths[currentFrameIdx];
-        loadingContainer.appendChild(img);
-      });
+    function renderUpToLevel(targetLevel) {
+      const levelToRender = Math.min(maxDist, Math.max(0, targetLevel));
+      while (renderedLevel <= levelToRender) {
+        if (distMap.has(renderedLevel)) {
+          const cells = distMap.get(renderedLevel);
+          cells.forEach(cell => {
+            const img = document.createElement('img');
+            img.className = 'loading-frame-img';
+            img.style.gridRow = cell.r + 1;
+            img.style.gridColumn = cell.c + 1;
+            img.src = framePaths[currentFrameIdx];
+            loadingContainer.appendChild(img);
+          });
+        }
+        renderedLevel++;
+      }
     }
 
     // STRICTLY START WITH ONLY 1 CENTERED INSTANCE (Level 0)
-    renderDistanceLevel(0);
+    renderUpToLevel(0);
 
-    // 4. Progressive Step-by-Step Multiplication Logic
-    let pageReady = false;
-    let multiplicationComplete = false;
-
+    // 4. Collect & Track Website Media Assets
     const pageImages = Array.from(document.querySelectorAll('img:not(.loading-frame-img)'));
-    let loadedCount = 0;
-    const totalPageImages = Math.max(1, pageImages.length);
+    const pageVideos = Array.from(document.querySelectorAll('video'));
+    
+    // Add background texture images to loading queue
+    const bg1 = new Image(); bg1.src = 'assets/background.webp';
+    const bg2 = new Image(); bg2.src = 'assets/background2.webp';
+    const bgAssets = [bg1, bg2];
 
-    function checkPageReady() {
-      if (loadedCount >= totalPageImages) {
-        pageReady = true;
-        tryFinish();
+    const totalAssetsList = [...pageImages, ...pageVideos, ...bgAssets];
+    const totalAssetsCount = Math.max(1, totalAssetsList.length);
+    let loadedAssetsCount = 0;
+    let finished = false;
+
+    function onAssetLoaded() {
+      if (finished) return;
+      loadedAssetsCount++;
+      const progress = Math.min(1, loadedAssetsCount / totalAssetsCount);
+      const targetLevel = Math.floor(progress * maxDist);
+      
+      renderUpToLevel(targetLevel);
+
+      if (progress >= 1) {
+        finishLoading();
       }
     }
 
-    pageImages.forEach(img => {
-      if (img.complete && img.naturalWidth > 0) {
-        loadedCount++;
-      } else {
-        img.addEventListener('load', () => { loadedCount++; checkPageReady(); });
-        img.addEventListener('error', () => { loadedCount++; checkPageReady(); });
+    function finishLoading() {
+      if (finished) return;
+      finished = true;
+
+      // Fill all remaining diagonal levels to complete screen coverage
+      renderUpToLevel(maxDist);
+
+      setTimeout(() => {
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => {
+          clearInterval(frameInterval);
+          loadingScreen.style.display = 'none';
+        }, 800);
+      }, 450);
+    }
+
+    // Track load events for each asset
+    totalAssetsList.forEach(asset => {
+      if (asset instanceof HTMLImageElement) {
+        if (asset.complete && asset.naturalWidth > 0) {
+          loadedAssetsCount++;
+        } else {
+          asset.addEventListener('load', onAssetLoaded);
+          asset.addEventListener('error', onAssetLoaded);
+        }
+      } else if (asset instanceof HTMLVideoElement) {
+        if (asset.readyState >= 3) {
+          loadedAssetsCount++;
+        } else {
+          asset.addEventListener('canplaythrough', onAssetLoaded);
+          asset.addEventListener('error', onAssetLoaded);
+        }
       }
     });
-    checkPageReady();
 
-    // Gradually multiply 1 diagonal ring every 75ms
-    const growthInterval = setInterval(() => {
-      currentDistLevel++;
-      if (currentDistLevel <= maxDist) {
-        renderDistanceLevel(currentDistLevel);
-      } else {
-        clearInterval(growthInterval);
-        multiplicationComplete = true;
-        tryFinish();
-      }
-    }, 75);
+    // Check initial cached progress
+    const initialProgress = Math.min(1, loadedAssetsCount / totalAssetsCount);
+    const initialLevel = Math.floor(initialProgress * maxDist);
+    renderUpToLevel(initialLevel);
 
-    function tryFinish() {
-      if (multiplicationComplete && pageReady) {
-        setTimeout(() => {
-          loadingScreen.style.opacity = '0';
-          setTimeout(() => {
-            clearInterval(frameInterval);
-            loadingScreen.style.display = 'none';
-          }, 800);
-        }, 300);
-      }
+    if (loadedAssetsCount >= totalAssetsCount) {
+      finishLoading();
     }
 
-    // Safety fallback: reveal after max 4.5s
+    // Safety fallback: reveal after max 6 seconds
     setTimeout(() => {
-      pageReady = true;
-      multiplicationComplete = true;
-      tryFinish();
-    }, 4500);
+      finishLoading();
+    }, 6000);
   })();
 });
