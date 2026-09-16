@@ -893,112 +893,94 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const maxDist = Math.max(...distMap.keys());
-    let isStepping = false;
-    let pendingTargetLevel = 0;
+    let currentLevel = 0;
 
-    function renderUpToLevel(targetLevel) {
-      pendingTargetLevel = Math.min(maxDist, Math.max(0, targetLevel));
-      if (isStepping) return;
-
-      isStepping = true;
-      const stepInterval = setInterval(() => {
-        if (renderedLevel <= pendingTargetLevel) {
-          if (distMap.has(renderedLevel)) {
-            const cells = distMap.get(renderedLevel);
-            cells.forEach(cell => {
-              const img = document.createElement('img');
-              img.className = 'loading-frame-img';
-              img.style.gridRow = cell.r + 1;
-              img.style.gridColumn = cell.c + 1;
-              img.src = framePaths[currentFrameIdx];
-              loadingContainer.appendChild(img);
-            });
-          }
-          renderedLevel++;
-        } else {
-          clearInterval(stepInterval);
-          isStepping = false;
-        }
-      }, 25);
-    }
-
-    // STRICTLY START WITH ONLY 1 CENTERED INSTANCE (Level 0)
-    renderUpToLevel(0);
-
-    // 4. Collect & Track Website Media Assets
-    const pageImages = Array.from(document.querySelectorAll('img:not(.loading-frame-img)'));
-    const pageVideos = Array.from(document.querySelectorAll('video'));
-    
-    // Add background texture images to loading queue
-    const bg1 = new Image(); bg1.src = 'assets/background.webp';
-    const bg2 = new Image(); bg2.src = 'assets/background2.webp';
-    const bgAssets = [bg1, bg2];
-
-    const totalAssetsList = [...pageImages, ...pageVideos, ...bgAssets];
-    const totalAssetsCount = Math.max(1, totalAssetsList.length);
-    let loadedAssetsCount = 0;
-    let finished = false;
-
-    function onAssetLoaded() {
-      if (finished) return;
-      loadedAssetsCount++;
-      const progress = Math.min(1, loadedAssetsCount / totalAssetsCount);
-      const targetLevel = Math.floor(progress * maxDist);
-      
-      renderUpToLevel(targetLevel);
-
-      if (progress >= 1) {
-        finishLoading();
+    function renderLevel(level) {
+      if (distMap.has(level)) {
+        const cells = distMap.get(level);
+        cells.forEach(cell => {
+          const img = document.createElement('img');
+          img.className = 'loading-frame-img';
+          img.style.gridRow = cell.r + 1;
+          img.style.gridColumn = cell.c + 1;
+          img.src = framePaths[currentFrameIdx];
+          loadingContainer.appendChild(img);
+        });
       }
     }
 
-    function finishLoading() {
-      if (finished) return;
-      finished = true;
+    // STRICTLY START WITH ONLY 1 CENTERED INSTANCE (Level 0)
+    renderLevel(0);
 
-      // Fill all remaining diagonal levels to complete screen coverage
-      renderUpToLevel(maxDist);
+    // 4. Track Website Media Assets
+    const pageImages = Array.from(document.querySelectorAll('img:not(.loading-frame-img)'));
+    const pageVideos = Array.from(document.querySelectorAll('video'));
+    const bg1 = new Image(); bg1.src = 'assets/background.webp';
+    const bg2 = new Image(); bg2.src = 'assets/background2.webp';
 
-      setTimeout(() => {
-        loadingScreen.style.opacity = '0';
-        setTimeout(() => {
-          clearInterval(frameInterval);
-          loadingScreen.style.display = 'none';
-        }, 800);
-      }, 450);
+    const totalAssetsList = [...pageImages, ...pageVideos, bg1, bg2];
+    const totalAssetsCount = Math.max(1, totalAssetsList.length);
+    let loadedAssetsCount = 0;
+    let pageLoaded = false;
+    let multiplicationFinished = false;
+    let hideTriggered = false;
+
+    function checkAssetsReady() {
+      if (loadedAssetsCount >= totalAssetsCount) {
+        pageLoaded = true;
+        tryHideLoadingScreen();
+      }
     }
 
-    // Track load events for each asset
     totalAssetsList.forEach(asset => {
       if (asset instanceof HTMLImageElement) {
         if (asset.complete && asset.naturalWidth > 0) {
           loadedAssetsCount++;
         } else {
-          asset.addEventListener('load', onAssetLoaded);
-          asset.addEventListener('error', onAssetLoaded);
+          asset.addEventListener('load', () => { loadedAssetsCount++; checkAssetsReady(); });
+          asset.addEventListener('error', () => { loadedAssetsCount++; checkAssetsReady(); });
         }
       } else if (asset instanceof HTMLVideoElement) {
         if (asset.readyState >= 3) {
           loadedAssetsCount++;
         } else {
-          asset.addEventListener('canplaythrough', onAssetLoaded);
-          asset.addEventListener('error', onAssetLoaded);
+          asset.addEventListener('canplaythrough', () => { loadedAssetsCount++; checkAssetsReady(); });
+          asset.addEventListener('error', () => { loadedAssetsCount++; checkAssetsReady(); });
         }
       }
     });
+    checkAssetsReady();
 
-    // Check initial cached progress
-    const initialProgress = Math.min(1, loadedAssetsCount / totalAssetsCount);
-    const initialLevel = Math.floor(initialProgress * maxDist);
-    renderUpToLevel(initialLevel);
+    // 5. Progressive Diagonal Growth (1 level every 45ms)
+    const growthInterval = setInterval(() => {
+      currentLevel++;
+      if (currentLevel <= maxDist) {
+        renderLevel(currentLevel);
+      } else {
+        clearInterval(growthInterval);
+        multiplicationFinished = true;
+        tryHideLoadingScreen();
+      }
+    }, 45);
 
-    if (loadedAssetsCount >= totalAssetsCount) {
-      finishLoading();
+    function tryHideLoadingScreen() {
+      if (multiplicationFinished && pageLoaded && !hideTriggered) {
+        hideTriggered = true;
+        setTimeout(() => {
+          loadingScreen.style.opacity = '0';
+          setTimeout(() => {
+            clearInterval(frameInterval);
+            loadingScreen.style.display = 'none';
+          }, 900);
+        }, 400);
+      }
     }
 
-    // Safety fallback: reveal after max 6 seconds
+    // Safety fallback: reveal after max 5 seconds
     setTimeout(() => {
-      finishLoading();
-    }, 6000);
+      pageLoaded = true;
+      multiplicationFinished = true;
+      tryHideLoadingScreen();
+    }, 5000);
   })();
 });
