@@ -893,24 +893,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const maxDist = Math.max(...distMap.keys());
-    let renderedLevel = 0;
+    let isStepping = false;
+    let pendingTargetLevel = 0;
 
     function renderUpToLevel(targetLevel) {
-      const levelToRender = Math.min(maxDist, Math.max(0, targetLevel));
-      while (renderedLevel <= levelToRender) {
-        if (distMap.has(renderedLevel)) {
-          const cells = distMap.get(renderedLevel);
-          cells.forEach(cell => {
-            const img = document.createElement('img');
-            img.className = 'loading-frame-img';
-            img.style.gridRow = cell.r + 1;
-            img.style.gridColumn = cell.c + 1;
-            img.src = framePaths[currentFrameIdx];
-            loadingContainer.appendChild(img);
-          });
+      pendingTargetLevel = Math.min(maxDist, Math.max(0, targetLevel));
+      if (isStepping) return;
+
+      isStepping = true;
+      const stepInterval = setInterval(() => {
+        if (renderedLevel <= pendingTargetLevel) {
+          if (distMap.has(renderedLevel)) {
+            const cells = distMap.get(renderedLevel);
+            cells.forEach(cell => {
+              const img = document.createElement('img');
+              img.className = 'loading-frame-img';
+              img.style.gridRow = cell.r + 1;
+              img.style.gridColumn = cell.c + 1;
+              img.src = framePaths[currentFrameIdx];
+              loadingContainer.appendChild(img);
+            });
+          }
+          renderedLevel++;
+        } else {
+          clearInterval(stepInterval);
+          isStepping = false;
         }
-        renderedLevel++;
-      }
+      }, 25);
     }
 
     // STRICTLY START WITH ONLY 1 CENTERED INSTANCE (Level 0)
