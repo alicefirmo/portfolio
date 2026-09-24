@@ -4,8 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const secWorks = document.getElementById('sec-works');
   const secFeed = document.getElementById('sec-feed');
   const secFlicker = document.getElementById('sec-flicker');
+  const secFlicker2 = document.getElementById('sec-flicker2');
 
-  // Track active section state ('home', 'works', 'feed', or 'flicker')
+  // Track active section state ('home', 'works', 'feed', 'flicker', or 'flicker2')
   let currentSection = 'home';
 
   // --- FEED SLIDESHOW ENGINE ---
@@ -90,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // --- FLICKER PERFORMANCE ENGINE ---
+  // --- FLICKER PERFORMANCE ENGINE 1 ---
   const flickerImgElement = document.getElementById('flicker-img');
   let flickerTimeoutId = null;
   let currentFlickerIndex = 0;
@@ -126,8 +127,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // --- FLICKER PERFORMANCE ENGINE 2 (ASCII TILED) ---
+  const flicker2Container = document.getElementById('flicker2-container');
+  let flicker2TimeoutId = null;
+  let currentFlicker2Index = 0;
+  const flicker2Images = [
+    'assets/flicker2_ascii/2.jpg',
+    'assets/flicker2_ascii/4.jpg',
+    'assets/flicker2_ascii/7.jpg',
+    'assets/flicker2_ascii/ascii_7104x4288_20260604_2145.jpg',
+    'assets/flicker2_ascii/ascii_7104x4288_20260604_2146.jpg',
+    'assets/flicker2_ascii/ascii_948x956.jpg',
+    'assets/flicker2_ascii/bbb.jpg'
+  ];
+
+  const doFlicker2 = () => {
+    if (!flicker2Container) return;
+    
+    let nextIndex = Math.floor(Math.random() * flicker2Images.length);
+    if (flicker2Images.length > 1 && nextIndex === currentFlicker2Index) {
+      nextIndex = (currentFlicker2Index + 1) % flicker2Images.length;
+    }
+    currentFlicker2Index = nextIndex;
+    const selectedImage = flicker2Images[currentFlicker2Index];
+    
+    flicker2Container.style.backgroundImage = `url('${selectedImage}')`;
+
+    const nextInterval = Math.floor(Math.random() * 150) + 100;
+    flicker2TimeoutId = setTimeout(doFlicker2, nextInterval);
+  };
+
+  const startFlicker2Animation = () => {
+    stopFlicker2Animation();
+    doFlicker2();
+  };
+
+  const stopFlicker2Animation = () => {
+    if (flicker2TimeoutId) {
+      clearTimeout(flicker2TimeoutId);
+      flicker2TimeoutId = null;
+    }
+  };
+
   if (secFlicker) {
     secFlicker.addEventListener('click', () => {
+      switchSection('flicker2');
+    });
+  }
+
+  if (secFlicker2) {
+    secFlicker2.addEventListener('click', () => {
       switchSection('feed');
     });
   }
@@ -137,14 +186,22 @@ document.addEventListener('DOMContentLoaded', () => {
       startFeedSlideshow();
       startFireAnimation();
       stopFlickerAnimation();
+      stopFlicker2Animation();
     } else if (newSection === 'flicker') {
       stopFeedSlideshow();
       stopFireAnimation();
+      stopFlicker2Animation();
       startFlickerAnimation();
+    } else if (newSection === 'flicker2') {
+      stopFeedSlideshow();
+      stopFireAnimation();
+      stopFlickerAnimation();
+      startFlicker2Animation();
     } else {
       stopFeedSlideshow();
       stopFireAnimation();
       stopFlickerAnimation();
+      stopFlicker2Animation();
     }
   };
 
@@ -156,12 +213,14 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (currentSection === 'works') activeSec = secWorks;
     else if (currentSection === 'feed') activeSec = secFeed;
     else if (currentSection === 'flicker') activeSec = secFlicker;
+    else if (currentSection === 'flicker2') activeSec = secFlicker2;
 
     let targetSec;
     if (target === 'home') targetSec = secHome;
     else if (target === 'works') targetSec = secWorks;
     else if (target === 'feed') targetSec = secFeed;
     else if (target === 'flicker') targetSec = secFlicker;
+    else if (target === 'flicker2') targetSec = secFlicker2;
 
     const oldSection = currentSection;
     currentSection = target;
@@ -185,10 +244,16 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('flicker-active');
     }
 
+    if (target === 'flicker2') {
+      document.body.classList.add('flicker2-active');
+    } else {
+      document.body.classList.remove('flicker2-active');
+    }
+
     onSectionChanged(target);
 
-    // Instant switch for feed and flicker, smooth transition for others
-    const isInstant = (target === 'feed' || target === 'flicker' || oldSection === 'feed' || oldSection === 'flicker');
+    // Instant switch for feed, flicker, and flicker2, smooth transition for others
+    const isInstant = (target === 'feed' || target === 'flicker' || target === 'flicker2' || oldSection === 'feed' || oldSection === 'flicker' || oldSection === 'flicker2');
 
     if (isInstant) {
       activeSec.style.opacity = '0';
@@ -228,6 +293,8 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.hash = 'feed';
     } else if (target === 'flicker') {
       window.location.hash = 'flicker';
+    } else if (target === 'flicker2') {
+      window.location.hash = 'flicker2';
     }
   };
 
@@ -247,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const handleHash = () => {
     const hash = window.location.hash.substring(1);
     const hideAllExcept = (activeSectionElement) => {
-      [secHome, secWorks, secFeed, secFlicker].forEach(sec => {
+      [secHome, secWorks, secFeed, secFlicker, secFlicker2].forEach(sec => {
         if (sec && sec !== activeSectionElement) {
           sec.classList.remove('active');
           sec.style.display = 'none';
@@ -266,6 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.add('works-active');
       document.body.classList.remove('feed-active');
       document.body.classList.remove('flicker-active');
+      document.body.classList.remove('flicker2-active');
       onSectionChanged('works');
     } else if (hash === 'feed') {
       hideAllExcept(secFeed);
@@ -276,6 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('works-active');
       document.body.classList.add('feed-active');
       document.body.classList.remove('flicker-active');
+      document.body.classList.remove('flicker2-active');
       onSectionChanged('feed');
     } else if (hash === 'flicker') {
       hideAllExcept(secFlicker);
@@ -286,7 +355,19 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('works-active');
       document.body.classList.remove('feed-active');
       document.body.classList.add('flicker-active');
+      document.body.classList.remove('flicker2-active');
       onSectionChanged('flicker');
+    } else if (hash === 'flicker2') {
+      hideAllExcept(secFlicker2);
+      secFlicker2.style.display = 'block';
+      secFlicker2.classList.add('active');
+      secFlicker2.style.opacity = '1';
+      currentSection = 'flicker2';
+      document.body.classList.remove('works-active');
+      document.body.classList.remove('feed-active');
+      document.body.classList.remove('flicker-active');
+      document.body.classList.add('flicker2-active');
+      onSectionChanged('flicker2');
     } else {
       hideAllExcept(secHome);
       secHome.style.display = 'block';
@@ -297,6 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('works-active');
       document.body.classList.remove('feed-active');
       document.body.classList.remove('flicker-active');
+      document.body.classList.remove('flicker2-active');
       onSectionChanged('home');
     }
   };
@@ -312,7 +394,9 @@ document.addEventListener('DOMContentLoaded', () => {
       switchSection('feed');
     } else if (hash === 'flicker' && currentSection !== 'flicker') {
       switchSection('flicker');
-    } else if (hash !== 'works' && hash !== 'feed' && hash !== 'flicker' && currentSection !== 'home') {
+    } else if (hash === 'flicker2' && currentSection !== 'flicker2') {
+      switchSection('flicker2');
+    } else if (hash !== 'works' && hash !== 'feed' && hash !== 'flicker' && hash !== 'flicker2' && currentSection !== 'home') {
       switchSection('home');
     }
   });
