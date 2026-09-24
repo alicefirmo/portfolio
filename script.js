@@ -3,8 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const secHome = document.getElementById('sec-home');
   const secWorks = document.getElementById('sec-works');
   const secFeed = document.getElementById('sec-feed');
+  const secFlicker = document.getElementById('sec-flicker');
 
-  // Track active section state ('home', 'works', or 'feed')
+  // Track active section state ('home', 'works', 'feed', or 'flicker')
   let currentSection = 'home';
 
   // --- FEED SLIDESHOW ENGINE ---
@@ -62,11 +63,88 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- FIRE ANIMATION ENGINE ---
+  const fireImgElement = document.getElementById('fire-frame');
+  let fireIntervalId = null;
+  let currentFireFrame = 1;
+  const totalFireFrames = 16;
+
+  const animateFire = () => {
+    currentFireFrame = (currentFireFrame % totalFireFrames) + 1;
+    const frameNum = String(currentFireFrame).padStart(2, '0');
+    if (fireImgElement) {
+      fireImgElement.src = `assets/fire/fire_${frameNum}.png`;
+    }
+  };
+
+  const startFireAnimation = () => {
+    if (!fireIntervalId) {
+      fireIntervalId = setInterval(animateFire, 90); // ~11fps smooth loop
+    }
+  };
+
+  const stopFireAnimation = () => {
+    if (fireIntervalId) {
+      clearInterval(fireIntervalId);
+      fireIntervalId = null;
+    }
+  };
+
+  // --- FLICKER PERFORMANCE ENGINE ---
+  const flickerImgElement = document.getElementById('flicker-img');
+  let flickerTimeoutId = null;
+  let currentFlickerIndex = 0;
+  const flickerImages = [
+    'assets/fire_performance/01.webp',
+    'assets/fire_performance/02.webp',
+    'assets/fire_performance/03.webp'
+  ];
+
+  const doFlicker = () => {
+    if (!flickerImgElement) return;
+    
+    let nextIndex = Math.floor(Math.random() * flickerImages.length);
+    if (flickerImages.length > 1 && nextIndex === currentFlickerIndex) {
+      nextIndex = (currentFlickerIndex + 1) % flickerImages.length;
+    }
+    currentFlickerIndex = nextIndex;
+    flickerImgElement.src = flickerImages[currentFlickerIndex];
+
+    const nextInterval = Math.floor(Math.random() * 150) + 100;
+    flickerTimeoutId = setTimeout(doFlicker, nextInterval);
+  };
+
+  const startFlickerAnimation = () => {
+    stopFlickerAnimation();
+    doFlicker();
+  };
+
+  const stopFlickerAnimation = () => {
+    if (flickerTimeoutId) {
+      clearTimeout(flickerTimeoutId);
+      flickerTimeoutId = null;
+    }
+  };
+
+  if (secFlicker) {
+    secFlicker.addEventListener('click', () => {
+      switchSection('feed');
+    });
+  }
+
   const onSectionChanged = (newSection) => {
     if (newSection === 'feed') {
       startFeedSlideshow();
+      startFireAnimation();
+      stopFlickerAnimation();
+    } else if (newSection === 'flicker') {
+      stopFeedSlideshow();
+      stopFireAnimation();
+      startFlickerAnimation();
     } else {
       stopFeedSlideshow();
+      stopFireAnimation();
+      stopFlickerAnimation();
     }
   };
 
@@ -77,16 +155,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentSection === 'home') activeSec = secHome;
     else if (currentSection === 'works') activeSec = secWorks;
     else if (currentSection === 'feed') activeSec = secFeed;
+    else if (currentSection === 'flicker') activeSec = secFlicker;
 
     let targetSec;
     if (target === 'home') targetSec = secHome;
     else if (target === 'works') targetSec = secWorks;
     else if (target === 'feed') targetSec = secFeed;
+    else if (target === 'flicker') targetSec = secFlicker;
 
     const oldSection = currentSection;
     currentSection = target;
 
-    // Toggle body class for inverted colors
+    // Toggle body classes for active sections
     if (target === 'works') {
       document.body.classList.add('works-active');
     } else {
@@ -99,10 +179,16 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('feed-active');
     }
 
+    if (target === 'flicker') {
+      document.body.classList.add('flicker-active');
+    } else {
+      document.body.classList.remove('flicker-active');
+    }
+
     onSectionChanged(target);
 
-    // Oldschool instant switch for feed, smooth transition for others
-    const isInstant = (target === 'feed' || oldSection === 'feed');
+    // Instant switch for feed and flicker, smooth transition for others
+    const isInstant = (target === 'feed' || target === 'flicker' || oldSection === 'feed' || oldSection === 'flicker');
 
     if (isInstant) {
       activeSec.style.opacity = '0';
@@ -140,6 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.hash = 'works';
     } else if (target === 'feed') {
       window.location.hash = 'feed';
+    } else if (target === 'flicker') {
+      window.location.hash = 'flicker';
     }
   };
 
@@ -158,14 +246,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Handle URL hash routing on initial load
   const handleHash = () => {
     const hash = window.location.hash.substring(1);
-    if (hash === 'works') {
-      secHome.classList.remove('active');
-      secHome.style.display = 'none';
-      secHome.style.opacity = '0';
-      secFeed.classList.remove('active');
-      secFeed.style.display = 'none';
-      secFeed.style.opacity = '0';
+    const hideAllExcept = (activeSectionElement) => {
+      [secHome, secWorks, secFeed, secFlicker].forEach(sec => {
+        if (sec && sec !== activeSectionElement) {
+          sec.classList.remove('active');
+          sec.style.display = 'none';
+          sec.style.opacity = '0';
+        }
+      });
+    };
 
+    if (hash === 'works') {
+      hideAllExcept(secWorks);
       secWorks.style.display = 'block';
       secWorks.classList.add('active');
       secWorks.style.opacity = '1';
@@ -173,30 +265,30 @@ document.addEventListener('DOMContentLoaded', () => {
       currentSection = 'works';
       document.body.classList.add('works-active');
       document.body.classList.remove('feed-active');
+      document.body.classList.remove('flicker-active');
       onSectionChanged('works');
     } else if (hash === 'feed') {
-      secHome.classList.remove('active');
-      secHome.style.display = 'none';
-      secHome.style.opacity = '0';
-      secWorks.classList.remove('active');
-      secWorks.style.display = 'none';
-      secWorks.style.opacity = '0';
-
+      hideAllExcept(secFeed);
       secFeed.style.display = 'block';
       secFeed.classList.add('active');
       secFeed.style.opacity = '1';
       currentSection = 'feed';
       document.body.classList.remove('works-active');
       document.body.classList.add('feed-active');
+      document.body.classList.remove('flicker-active');
       onSectionChanged('feed');
+    } else if (hash === 'flicker') {
+      hideAllExcept(secFlicker);
+      secFlicker.style.display = 'block';
+      secFlicker.classList.add('active');
+      secFlicker.style.opacity = '1';
+      currentSection = 'flicker';
+      document.body.classList.remove('works-active');
+      document.body.classList.remove('feed-active');
+      document.body.classList.add('flicker-active');
+      onSectionChanged('flicker');
     } else {
-      secWorks.classList.remove('active');
-      secWorks.style.display = 'none';
-      secWorks.style.opacity = '0';
-      secFeed.classList.remove('active');
-      secFeed.style.display = 'none';
-      secFeed.style.opacity = '0';
-
+      hideAllExcept(secHome);
       secHome.style.display = 'block';
       secHome.classList.add('active');
       secHome.style.opacity = '1';
@@ -204,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentSection = 'home';
       document.body.classList.remove('works-active');
       document.body.classList.remove('feed-active');
+      document.body.classList.remove('flicker-active');
       onSectionChanged('home');
     }
   };
@@ -217,7 +310,9 @@ document.addEventListener('DOMContentLoaded', () => {
       switchSection('works');
     } else if (hash === 'feed' && currentSection !== 'feed') {
       switchSection('feed');
-    } else if (hash !== 'works' && hash !== 'feed' && currentSection !== 'home') {
+    } else if (hash === 'flicker' && currentSection !== 'flicker') {
+      switchSection('flicker');
+    } else if (hash !== 'works' && hash !== 'feed' && hash !== 'flicker' && currentSection !== 'home') {
       switchSection('home');
     }
   });
